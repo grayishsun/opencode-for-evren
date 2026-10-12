@@ -11,6 +11,14 @@ type QuotaView = {
 
 const EMPTY: QuotaView = { remaining: "?", held: "?", level: "?", daily: "?" }
 
+function fmtDaily(v: string): string {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return v
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}B`
+  return String(n)
+}
+
 function viewOf(status: any): { quota: QuotaView; connected: boolean; error: string | null } {
   const quota = (status?.quota ?? null) as Record<string, unknown> | null
   if (!quota) return { quota: EMPTY, connected: false, error: (status?.error as string | null) ?? null }
@@ -71,7 +79,7 @@ export default Plugin.define({
         if (!state.connected) return <text>EVREN: bağlı değil</text>
         return (
           <text>
-            EVREN CR {state.quota.remaining} · {state.quota.level}
+            EVREN CR {state.quota.remaining} · {state.quota.level} · gün {fmtDaily(state.quota.daily)}
           </text>
         )
       },

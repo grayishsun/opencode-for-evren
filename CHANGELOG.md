@@ -1,5 +1,17 @@
 # changelog
 
+## v0.1.6 — 2026-10-12
+
+- Yeni: `--set-key` / `-SetKey` — anahtarı config/plugin'a dokunmadan
+  yeniler (yazar → şart akışı → kota özeti). Ayrıca `/dev/tty` okunamazken
+  pipe girdisinin yutulması hatası giderildi (prompt refactor).
+- Sidebar artık günlük kalan tokenı da gösterir (`EVREN CR 0 · ok · gün 14.9M`).
+- Düzeltme: ps1 `Read-SavedKey` iki alan da doluysa değerleri yanyana
+  ekliyordu; ilk dolu olan kazanır.
+- Tedarik güvenliği: `SHA256SUMS` + uzak-mod indirme doğrulaması (uymazsa
+  kurulum durur); `npm run check-versions` 4 konumdaki sürümü kilitler;
+  `npm run checksums` ile üretilir. README'de deneysel Responses notu.
+
 ## v0.1.5 — 2026-10-12
 
 - Kritik düzeltme (devam): plugin kurulum düzeni DÜZ (`index.ts` kökte).

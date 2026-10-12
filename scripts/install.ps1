@@ -7,12 +7,14 @@
     Provider bloğu v2 şemasındadır, kimlik plugin üzerinden çözülür.
 .EXAMPLE
     .\install.ps1
+    .\install.ps1 -SetKey
     .\install.ps1 -SyncModels
     .\install.ps1 -Uninstall
     .\install.ps1 -Diagnose
 #>
 [CmdletBinding()]
 param(
+    [switch]$SetKey,
     [switch]$SyncModels,
     [switch]$Uninstall,
     [switch]$Diagnose
@@ -29,7 +31,7 @@ $LegacyKey  = Join-Path $ConfigDir ".evren-key"
 $LegacyHome = Join-Path ([Environment]::GetFolderPath("UserProfile")) ".evren-config"
 $PluginDir  = Join-Path $ConfigDir "plugins\evren"
 $PluginFiles = @("plugin/package.json", "plugin/index.ts", "plugin/rpc.ts", "plugin/tui.tsx")
-$InstallerVersion = "0.1.5"
+$InstallerVersion = "0.1.6"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Fail([string]$Message) { Write-Host ""; Write-Host "HATA: $Message" -ForegroundColor Red; exit 1 }
@@ -69,7 +71,9 @@ function Read-SavedKey {
             if (-not $raw) { continue }
             if ($raw.StartsWith("{")) {
                 $data = $raw | ConvertFrom-Json
-                $k = "$($data.apiKey)$($data.key)".Trim()
+                $api = "$($data.apiKey)".Trim()
+                $alt = "$($data.key)".Trim()
+                $k = if ($api) { $api } else { $alt }
                 if ($k) { return $k }
             }
             elseif ($raw -match '^evren_llm_\S{8,}$') { return $raw }
@@ -203,10 +207,20 @@ function Install-Plugin {
         Copy-Item (Join-Path $local "rpc.ts") (Join-Path $PluginDir "rpc.ts") -Force
         Copy-Item (Join-Path $local "tui.tsx") (Join-Path $PluginDir "tui.tsx") -Force
     } else {
+        $sums = (Invoke-WebRequest -Uri "$RepoRaw/SHA256SUMS" -UseBasicParsing | Select-Object -ExpandProperty Content) -replace "`r`n", "`n"
         foreach ($f in @("plugin/package.json", "plugin/index.ts", "plugin/rpc.ts", "plugin/tui.tsx")) {
             $dest = Join-Path $PluginDir (Split-Path $f -Leaf)
             Invoke-WebRequest -Uri "$RepoRaw/$f" -OutFile $dest
+            $row = @($sums -split "`n" | Where-Object { $_ -like "*  $f" }) | Select-Object -First 1
+            if (-not $row) { Fail "SHA256SUMS içinde kayıt yok: $f" }
+            $want = ($row -split '\s+')[0].ToLower()
+            $rawBytes = [System.IO.File]::ReadAllBytes($dest)
+            $normalized = [System.Text.Encoding]::UTF8.GetString($rawBytes) -replace "`r`n", "`n"
+            $hasher = [System.Security.Cryptography.SHA256]::Create()
+            $got = ($hasher.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($normalized)) | ForEach-Object { $_.ToString("x2") }) -join ''
+            if ($got -ne $want) { Fail "Bütünlük doğrulanamadı: $f (indirilen dosya beklenenden farklı)" }
         }
+        Ok "Plugin bütünlüğü doğrulandı (SHA256)."
     }
     # Eski düzen artığı (src/ alt dizini) keşfi şaşırtır; temizlenir.
     if (Test-Path (Join-Path $PluginDir "src")) { Remove-Item (Join-Path $PluginDir "src") -Recurse -Force }
@@ -215,6 +229,20 @@ function Install-Plugin {
         if (Test-Path $p) { Remove-Item $p -Force }
     }
     Ok "Plugin kuruldu: $PluginDir"
+}
+
+function Read-ApiKey([string]$Label) {
+    $secure = Read-Host $Label -AsSecureString
+    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+    try { $k = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
+    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
+    # Yapıştırma artıkları: kırp, tırnakları ve görünmez karakterleri at.
+    $k = $k.Trim().Trim('"').Trim("'").Trim() -replace "[\u200B-\u200D\uFEFF]", ""
+    # Biçim kapısı bilerek gevşek: gerçek doğrulama canlı API çağrısıdır (401).
+    if ($k -notmatch '^evren_llm_\S{8,}$') {
+        Fail "Anahtar biçimi tanınmadı (uzunluk $($k.Length)). Tırnaksız, 'evren_llm_' ile başlayan anahtarı panelden yeniden kopyalayın."
+    }
+    return $k
 }
 
 function Invoke-TermsFlow([string]$Key) {
@@ -235,6 +263,15 @@ function Invoke-TermsFlow([string]$Key) {
     } else {
         Ok "Kullanım şartları zaten kabul edilmiş (v$version)."
     }
+}
+
+function Invoke-SetKey {
+    Write-Host "=== EVREN anahtar güncelleme (config/plugin korunur) ===" -ForegroundColor Cyan
+    $key = Read-ApiKey "Yeni EVREN API anahtarınız (evren_llm_...)"
+    Write-KeyFile -Key $key
+    Invoke-TermsFlow -Key $key
+    try { Info "quota: $(Invoke-EvrenApi -Path '/quota' -Key $key | ConvertTo-Json -Compress)" } catch {}
+    Info "Farklı bir hesapsa model listesi için -SyncModels çalıştırın."
 }
 
 function Invoke-Diagnose {
@@ -326,16 +363,7 @@ function Invoke-Install {
         } catch { Fail "opencode kurulamadı (https://opencode.ai adresinden elle kurun)." }
     }
 
-    $secure = Read-Host "EVREN API anahtarınız (evren_llm_...)" -AsSecureString
-    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-    try { $key = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
-    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
-    # Yapıştırma artıkları: kırp, tırnakları ve görünmez karakterleri at.
-    $key = $key.Trim().Trim('"').Trim("'").Trim() -replace "[\u200B-\u200D\uFEFF]", ""
-    # Biçim kapısı bilerek gevşek: gerçek doğrulama canlı API çağrısıdır (401).
-    if ($key -notmatch '^evren_llm_\S{8,}$') {
-        Fail "Anahtar biçimi tanınmadı (uzunluk $($key.Length)). Tırnaksız, 'evren_llm_' ile başlayan anahtarı panelden yeniden kopyalayın."
-    }
+    $key = Read-ApiKey "EVREN API anahtarınız (evren_llm_...)"
 
     Write-KeyFile -Key $key
     Invoke-TermsFlow -Key $key
@@ -365,6 +393,7 @@ function Invoke-Install {
 }
 
 if ($Diagnose) { Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray; Invoke-Diagnose; exit 0 }
+if ($SetKey) { Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray; Invoke-SetKey; exit 0 }
 if ($SyncModels) { Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray; Invoke-SyncModels; exit 0 }
 if ($Uninstall) { Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray; Invoke-Uninstall; exit 0 }
 Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray

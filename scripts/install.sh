@@ -3,6 +3,7 @@
 # EVREN LLM + OpenCode kurulumu (Linux / macOS) — v2 uyumlu
 #
 #   ./install.sh                kurulum (tek tık)
+#   ./install.sh --set-key      anahtarı yenile (config/plugin'a dokunmadan)
 #   ./install.sh --sync-models  model listesini API'den tazele
 #   ./install.sh --uninstall    tüm değişiklikleri geri al
 #   ./install.sh --diagnose     salt-okunur teşhis (anahtar ASLA yazdırılmaz)
@@ -20,7 +21,7 @@
 set -euo pipefail
 
 BASE_URL="https://evren-llmapi.ssyz.org.tr/v1"
-INSTALLER_VERSION="0.1.5"
+INSTALLER_VERSION="0.1.6"
 REPO_RAW="https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main"
 CONFIG_DIR="${HOME}/.config/opencode"
 CONFIG_PATH="${CONFIG_DIR}/opencode.jsonc"
@@ -75,6 +76,29 @@ api_get() {
 
 mask_key() {
   python3 -c 'import sys; k=sys.argv[1]; print("evren_llm_…" + k[-4:] if len(k) > 8 else "(geçersiz)")' "$1"
+}
+
+# Yapıştırma artıklarını temizler: kırp, tırnakları ve görünmez karakterleri at.
+clean_key() {
+  python3 -c 'import sys; k = sys.stdin.read().strip(); k = k.strip(chr(34) + chr(39)); k = k.replace(chr(0x200b), "").replace(chr(0x200c), "").replace(chr(0x200d), "").replace(chr(0xfeff), ""); print(k)'
+}
+
+# Anahtarı gizli sorar, temizler, gevşek biçimi denetler. Sonucu stdout'a basar.
+# Gerçek doğrulama canlı API çağrısıdır (401).
+prompt_key() {
+  local label="${1:-EVREN API anahtarınız (evren_llm_...)}" key=""
+  if [[ -r /dev/tty ]]; then
+    IFS= read -r -s -p "$label: " key 2>/dev/null </dev/tty || true
+  fi
+  if [[ -z "$key" ]]; then
+    # tty yoksa stdin'den oku (pipe ile otomasyon ya da normal terminal).
+    IFS= read -r -s -p "$label: " key || true
+  fi
+  printf '\n' >&2
+  key="$(printf '%s' "$key" | clean_key)"
+  [[ "$key" =~ ^evren_llm_[^[:space:]]{8,}$ ]] \
+    || fail "Anahtar biçimi tanınmadı (uzunluk ${#key}). Tırnaksız, 'evren_llm_' ile başlayan anahtarı panelden yeniden kopyalayın."
+  printf '%s' "$key"
 }
 
 read_saved_key() {
@@ -239,17 +263,39 @@ print(f"[OK] opencode.jsonc güncellendi ({len(models_map)} model, apiKey yazıl
 PYEOF
 }
 
+# sha256: sha256sum (Linux) ya da shasum -a 256 (macOS). LF-normalize uygular.
+sha_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    tr -d '\r' < "$1" | sha256sum | cut -d' ' -f1
+  elif command -v shasum >/dev/null 2>&1; then
+    tr -d '\r' < "$1" | shasum -a 256 | cut -d' ' -f1
+  else
+    return 1
+  fi
+}
+
 install_plugin() {
   mkdir -p "$PLUGIN_DIR"
   if [[ "$SRC_MODE" == "local" ]]; then
     cp "${SRC_DIR}/package.json" "${SRC_DIR}/index.ts" "${SRC_DIR}/rpc.ts" "${SRC_DIR}/tui.tsx" "$PLUGIN_DIR/"
   else
-    local f base
+    local sums f base want got
+    sums="$(mktemp)"
+    curl -fsS --max-time 60 --retry 3 "${REPO_RAW}/SHA256SUMS" -o "$sums" \
+      || fail "SHA256SUMS indirilemedi."
+    command -v sha256sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1 \
+      || fail "Bütünlük doğrulaması için sha256sum ya da shasum gerekli."
     for f in "${PLUGIN_FILES[@]}"; do
       base="$(basename "$f")"
       curl -fsS --max-time 60 --retry 3 "${REPO_RAW}/${f}" -o "${PLUGIN_DIR}/${base}" \
         || fail "Plugin dosyası indirilemedi: $f"
+      want="$(grep -F "  $f" "$sums" | head -n1 | cut -d' ' -f1)"
+      [[ -n "$want" ]] || fail "SHA256SUMS içinde kayıt yok: $f"
+      got="$(sha_of "${PLUGIN_DIR}/${base}")"
+      [[ "$got" == "$want" ]] || fail "Bütünlük doğrulanamadı: $f (indirilen dosya beklenenden farklı)"
     done
+    rm -f "$sums"
+    ok "Plugin bütünlüğü doğrulandı (SHA256)."
   fi
   # Eski düzen artıkları (src/ alt dizini) yeni paketi gölgelerdi; temizlenir.
   rm -rf "${PLUGIN_DIR}/src"
@@ -269,11 +315,12 @@ terms_flow() {
     printf '\n=== EVREN Kullanım Şartları (v%s) ===\n' "$version"
     printf '%s' "$text" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("content", ""))'
     printf '\n'
-    local confirm
+    local confirm=""
     if [[ -r /dev/tty ]]; then
-      read -r -p "Kabul için EVET yazın: " confirm </dev/tty
-    else
-      read -r -p "Kabul için EVET yazın: " confirm
+      read -r -p "Kabul için EVET yazın: " confirm 2>/dev/null </dev/tty || true
+    fi
+    if [[ -z "$confirm" ]]; then
+      read -r -p "Kabul için EVET yazın: " confirm || true
     fi
     [[ "$(printf '%s' "$confirm" | tr '[:lower:]' '[:upper:]')" == "EVET" ]] || fail "Şartlar kabul edilmedi."
     local attempt=1
@@ -328,6 +375,17 @@ PYEOF
   else
     warn "Anahtar bulunamadı; canlı kontroller atlandı."
   fi
+}
+
+do_set_key() {
+  printf '=== EVREN anahtar güncelleme (config/plugin korunur) ===\n'
+  local key
+  key="$(prompt_key "Yeni EVREN API anahtarınız (evren_llm_...)")"
+  export EVREN_API_KEY="$key"
+  write_key_file "$key"
+  terms_flow "$key"
+  printf '\nKota: %s\n' "$(api_get "/quota" "$key")"
+  info "Farklı bir hesapsa model listesi için --sync-models çalıştırın."
 }
 
 do_sync_models() {
@@ -394,15 +452,7 @@ do_install() {
   fi
 
   local key
-  if [[ -r /dev/tty ]]; then
-    IFS= read -r -s -p "EVREN API anahtarınız (evren_llm_...): " key </dev/tty
-  else
-    IFS= read -r -s -p "EVREN API anahtarınız (evren_llm_...): " key
-  fi
-  printf '\n'
-  key="$(printf '%s' "$key" | python3 -c 'import sys; k = sys.stdin.read().strip(); k = k.strip(chr(34) + chr(39)); k = k.replace(chr(0x200b), "").replace(chr(0x200c), "").replace(chr(0x200d), "").replace(chr(0xfeff), ""); print(k)')"
-  # Biçim kapısı bilerek gevşek: gerçek doğrulama canlı API çağrısıdır (401).
-  [[ "$key" =~ ^evren_llm_[^[:space:]]{8,}$ ]] || fail "Anahtar biçimi tanınmadı (uzunluk ${#key}). Tırnaksız, 'evren_llm_' ile başlayan anahtarı panelden yeniden kopyalayın."
+  key="$(prompt_key "EVREN API anahtarınız (evren_llm_...)")"
   export EVREN_API_KEY="$key"
 
   write_key_file "$key"
@@ -438,9 +488,10 @@ do_install() {
 }
 
 case "${1:-}" in
+  --set-key) info "opencode-for-evren v${INSTALLER_VERSION}"; do_set_key ;;
   --sync-models|--update-models) info "opencode-for-evren v${INSTALLER_VERSION}"; do_sync_models ;;
   --uninstall) info "opencode-for-evren v${INSTALLER_VERSION}"; do_uninstall ;;
   --diagnose) info "opencode-for-evren v${INSTALLER_VERSION}"; do_diagnose ;;
   "") info "opencode-for-evren v${INSTALLER_VERSION}"; do_install ;;
-  *) fail "Bilinmeyen parametre: $1 (--sync-models | --uninstall | --diagnose)" ;;
+  *) fail "Bilinmeyen parametre: $1 (--set-key | --sync-models | --uninstall | --diagnose)" ;;
 esac

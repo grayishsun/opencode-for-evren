@@ -159,6 +159,9 @@ Sırasıyla kontrol et:
 # Sadece model listesini tazele (anahtar sormaz, şart adımını atlar)
 ./scripts/install.sh --sync-models            # PS: .\install.ps1 -SyncModels
 
+# Anahtarı yenile (config/plugin korunur; şart akışı zaten kabul edildiyse atlanır)
+./scripts/install.sh --set-key                # PS: .\install.ps1 -SetKey
+
 # Salt-okunur teşhis (canlı terms/quota dahil, anahtar yazdırmaz)
 ./scripts/install.sh --diagnose               # PS: .\install.ps1 -Diagnose
 
@@ -209,14 +212,41 @@ yanıt başlıklarından beslenir. Hata gövdesindeki `error.evren` ayrıntılar
 
 ```bash
 npm install
-npm run typecheck   # tsc --noEmit
+npm run typecheck       # tsc --noEmit
+npm run check-versions  # 4 konumdaki sürümün eşitliği
+npm run checksums       # SHA256SUMS üretimi (dosya değişikliğinden SONRA)
 ```
 
-Doğrulama durumu (v0.1.0): `bash -n`, PowerShell Parser, `tsc`, JSON parse,
-canlı `/v1/models` eşleşmesi (8 model), sandbox merge (v1→v2 göçü + apiKey temizliği),
-sandbox `--sync-models` (fallback) / `--uninstall` / `--diagnose` (canlı quota) —
-tamamı geçti. Canlı sohbet duman testi kurulum sonrası tek komutla yapılır
-(kredi harcar, bu yüzden CI'da koşmaz).
+Uzak-mod kurulumlar plugin dosyalarını `SHA256SUMS` ile doğrular (uymazsa
+kurulum durur). Elle doğrulama: `sha256sum -c SHA256SUMS` (Linux),
+`shasum -a 256` (macOS) veya `Get-FileHash -Algorithm SHA256` (Windows).
+Hash'ler satır-sonu normalize hesaplanır (CRLF klonlar da geçer).
+
+### Deneysel: Responses API
+
+EVREN `/v1/responses` uç noktasını da sunar. opencode'un
+`openai-compatible/responses` çalışma zamanıyla kullanmak isterseniz
+(`providers.evren.package` alanını elle değiştirin) — bu yol henüz bu repoda
+uçtan uca doğrulanmadı, denerseniz issue açın:
+
+```jsonc
+{
+  "providers": {
+    "evren": {
+      "package": "@opencode/ai/providers/openai-compatible/responses"
+    }
+  }
+}
+```
+
+## Doğrulama durumu (v0.1.6)
+
+`bash -n`, PowerShell Parser, `tsc --noEmit`, JSON parse, `check-versions`,
+canlı `/v1/models` eşleşmesi (8 model), sandbox merge (v1→v2 göçü + apiKey
+temizliği), sandbox `--sync-models` (fallback) / `--uninstall` / `--diagnose`
+(canlı quota) / `--set-key` (canlı 401 reddi), uzak-mod SHA256 doğrulaması,
+`evren_status` canlı çağrısı (`connected: true`) — tamamı geçti. Canlı sohbet
+duman testi kurulum sonrası tek komutla yapılır.
 
 ## Lisans
 
