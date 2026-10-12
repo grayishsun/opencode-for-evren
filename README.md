@@ -36,6 +36,11 @@ del "%TEMP%\evren-install.ps1" 2>nul & curl -fsSL --remove-on-error "https://raw
 
 > Eski kopya çalışırsa: komut önce `del` ile siler, `?v=%RANDOM%` ile tazesini
 > indirir. Açılışta `opencode-for-evren vX.Y.Z` bandını kontrol edin.
+> İndirme ısrarla eski geliyorsa (agresif proxy/önbellek) jsDelivr aynasını kullanın:
+>
+> ```cmd
+> del "%TEMP%\evren-install.ps1" 2>nul & curl -fsSL --remove-on-error "https://cdn.jsdelivr.net/gh/grayishsun/opencode-for-evren@main/scripts/install.ps1" -o "%TEMP%\evren-install.ps1" && powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\evren-install.ps1"
+> ```
 
 Kurulum sırasıyla şunları yapar:
 
