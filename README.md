@@ -77,6 +77,68 @@ opencode run --model evren/glm-5.3 "Sadece EVREN OK yaz."
 Oturum içindeyken `/evren` yazmak kota + şart + model özetini gösterir.
 `evren_status` aracı sayesinde modelin kendisi de kotayı okuyabilir.
 
+### Bakiyeyi sormak (3 yol)
+
+**1. Doğal dille sormak** — araç çağrısı destekleyen bir model seçiliyken
+(`evren/glm-5.3` önerilir):
+
+```
+kalan bakiyem ne?
+```
+
+Model `evren_status` aracını çağırıp kalan CR, hold, seviye ve günlük kalan
+tokenı söyler.
+
+> ⚠️ `evren/auto` ile sorarsan model "erişimim yok" der. Nedeni: `auto`
+> sunucu-yönlendirmelidir ve araç çağrısı desteklemez (`tools: false`, API'nin
+> kendi `capabilities` değeri). Bakiye soruları için `evren/glm-5.3`,
+> `evren/deepseek-v4.1-flash` gibi `tools: true` bir model seç.
+
+**2. `/evren` komutu** — araç desteğine ihtiyaç duymaz, her modelde çalışır:
+
+```
+/evren
+```
+
+Örnek çıktı:
+
+```
+EVREN durumu (2026-10-12T08:23:37.019Z)
+Kota: CR kalan=0 hold=0 seviye=ok günlük-kalan-token=14952794
+Şartlar: v1 accepted=True
+Modeller: deepseek-v4-flash, gemma-4-31b, qwen3-vl-30b, auto, mimo-v2.6-pro, qwen3.8-flash-next, deepseek-v4.1-flash, glm-5.3
+```
+
+**3. Sidebar** — servis yeniden başladıktan sonra TUI'nin sağ alt köşesinde
+sürekli görünür (`sidebar.footer` yuvası, 60 sn'de bir tazelenir):
+
+```
+EVREN CR 0 · ok
+```
+
+Seviye `ok` dışına çıkarsa uyarı toast'ı gösterilir.
+
+### Bakiye yorumu
+
+`remaining_cr` şu an `0` görünebilir — bu normaldir: 1 Kasım 2026'ya kadar tüm
+modellerde fiyat `0.0` (ücretsiz dönem), harcama günlük token kotasından düşer
+(15M/gün; kalanı `daily_remaining_tokens` verir). 5 dakikalık pencerede
+`used_tokens/cap` (2.5M) oranı da aynı yanıtta gelir (`usage_ratio`, `level`).
+
+### "Erişimim yok" hatası alınırsa
+
+Sırasıyla kontrol et:
+
+1. Modelin araç destekliyor mu? (`/models` çıktısında ya da `/evren` listesinde
+   `tools: false` olan — örn. `auto` — ile araçlar çalışmaz.)
+2. Yeni oturum açtın mı? Eski oturum, plugin yüklenmeden önceki sunucuya bağlı
+   kalmış olabilir.
+3. Plugin güncel mi? `opencode plugin list` çıktısında `evren` (id birebir)
+   görünmeli; `evren-gateway` yazıyorsa eski kurulum artığı gölgeliyordur:
+   `./scripts/install.sh --uninstall` (PS: `-Uninstall`) sonrası yeniden kur.
+4. `install.ps1 -Diagnose` çalıştır: `connected` ve `quota` satırları canlı
+   değer dönmelidir; dönmüyorsa anahtar/şart adımına bak.
+
 ## Güvenlik modeli
 
 - API anahtarı `opencode.jsonc` / proje config'lerine **yazılmaz**.
