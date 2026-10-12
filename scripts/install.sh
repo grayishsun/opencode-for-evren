@@ -20,7 +20,7 @@
 set -euo pipefail
 
 BASE_URL="https://evren-llmapi.ssyz.org.tr/v1"
-INSTALLER_VERSION="0.1.3"
+INSTALLER_VERSION="0.1.4"
 REPO_RAW="https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main"
 CONFIG_DIR="${HOME}/.config/opencode"
 CONFIG_PATH="${CONFIG_DIR}/opencode.jsonc"
@@ -251,6 +251,8 @@ install_plugin() {
         || fail "Plugin dosyası indirilemedi: $f"
     done
   fi
+  # Eski düzende kalan kök dosyalar (index.ts/rpc.ts) yeni paketi gölgelerdi; temizlenir.
+  rm -f "${PLUGIN_DIR}/index.ts" "${PLUGIN_DIR}/index.js" "${PLUGIN_DIR}/rpc.ts" "${PLUGIN_DIR}/tui.ts" "${PLUGIN_DIR}/tui.tsx"
   ok "Plugin kuruldu: $PLUGIN_DIR"
 }
 

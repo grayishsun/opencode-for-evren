@@ -1,5 +1,13 @@
 # changelog
 
+## v0.1.4 — 2026-10-12
+
+- Kritik düzeltme: kurulum artık plugin dizinindeki eski düz kök dosyaları
+  (`index.ts`/`rpc.ts`) temizliyor. Bunlar kalınca opencode eski plugini
+  (`evren-gateway`, araçsız) yüklüyor, yeni paket (`evren`: `evren_status`
+  aracı, `/evren` komutu, sidebar) gölgede kalıyordu. Sonuç: "kalan bakiyem
+  ne?" sorusuna modelin erişimi yoktu.
+
 ## v0.1.3 — 2026-10-12
 
 - Windows PowerShell 5.1 uyumluluğu: anahtar dosyası yazımında PS7'ye özel

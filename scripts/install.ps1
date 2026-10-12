@@ -29,7 +29,7 @@ $LegacyKey  = Join-Path $ConfigDir ".evren-key"
 $LegacyHome = Join-Path ([Environment]::GetFolderPath("UserProfile")) ".evren-config"
 $PluginDir  = Join-Path $ConfigDir "plugins\evren"
 $PluginFiles = @("package.json", "src/index.ts", "src/rpc.ts", "src/tui.tsx")
-$InstallerVersion = "0.1.3"
+$InstallerVersion = "0.1.4"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Fail([string]$Message) { Write-Host ""; Write-Host "HATA: $Message" -ForegroundColor Red; exit 1 }
@@ -206,6 +206,11 @@ function Install-Plugin {
             New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
             Invoke-WebRequest -Uri "$RepoRaw/$f" -OutFile $dest
         }
+    }
+    # Eski düzende kalan kök dosyalar (index.ts/rpc.ts) yeni paketi gölgelerdi; temizlenir.
+    foreach ($stale in @("index.ts", "index.js", "rpc.ts", "tui.ts", "tui.tsx")) {
+        $p = Join-Path $PluginDir $stale
+        if (Test-Path $p) { Remove-Item $p -Force }
     }
     Ok "Plugin kuruldu: $PluginDir"
 }
