@@ -1,5 +1,11 @@
 # changelog
 
+## v0.1.8 — 2026-10-12
+
+- OpenCode v2 kapısı: kurulumun her modu önce `opencode --version` denetler;
+  v1 (örn. 1.19.0 — `service` yeteneği yok) görülürse durup `opencode upgrade`
+  yönergesi verir. README'ye Gereksinimler bölümü eklendi.
+
 ## v0.1.7 — 2026-10-12
 
 - Kurulum sonunda `opencode service restart` otomatik çalışır (plugin ve

@@ -1,6 +1,6 @@
 {
   "name": "opencode-evren",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "EVREN LLM provider entegrasyonu: otomatik model senkronu, kota/sidebar, terms kapısı ve 429 backoff.",
   "type": "module",
   "license": "MIT",

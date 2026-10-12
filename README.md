@@ -1,12 +1,23 @@
 # opencode-for-evren
 
-EVREN LLM'i ([evren.ssyz.org.tr](https://evren.ssyz.org.tr)) OpenCode'da (v2) kullanmak için
+EVREN LLM'i ([evren.ssyz.org.tr](https://evren.ssyz.org.tr)) **OpenCode v2**'de kullanmak için
 tek-tık kurulum + plugin paketi. macOS, Linux ve Windows 10/11 desteklenir.
+OpenCode v1 (1.x) desteklenmez — detay için [Gereksinimler](#gereksinimler).
 
 > **Önemli:** Bu repo, `bykemalh/evren-llm-opencode` çalışmasındaki bilinen sorunları
 > gideren sıfırdan yazımdır: çift başlık (`X-API-Key` + `Bearer`) desteği, 429 backoff,
 > v2 provider şeması (`providers`, `package`, `env`), config'e **anahtar yazmama**,
 > otomatik model senkronu ve sidebar'da CR bakiyesi.
+
+## Gereksinimler
+
+- **OpenCode v2** — `opencode --version` çıktısı `v2.x` olmalı. v1 (örn. 1.19.0)
+  desteklenmez: `service restart`, `providers` şeması ve plugin API yalnızca
+  v2'de vardır. Kurulum bunu otomatik denetler; v1 görürse durur ve yükseltme
+  komutunu gösterir. Elle yükseltme: `opencode upgrade` ya da
+  [opencode.ai](https://opencode.ai) adresinden yeniden kurulum.
+- Linux/macOS: `curl` + `python3`. Windows: PowerShell 5.1+ (hazır gelir).
+- EVREN API anahtarı (`evren_llm_...`).
 
 ## Hızlı kurulum
 

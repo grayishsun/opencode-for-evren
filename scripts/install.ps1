@@ -31,13 +31,27 @@ $LegacyKey  = Join-Path $ConfigDir ".evren-key"
 $LegacyHome = Join-Path ([Environment]::GetFolderPath("UserProfile")) ".evren-config"
 $PluginDir  = Join-Path $ConfigDir "plugins\evren"
 $PluginFiles = @("plugin/package.json", "plugin/index.ts", "plugin/rpc.ts", "plugin/tui.tsx")
-$InstallerVersion = "0.1.7"
+$InstallerVersion = "0.1.8"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Fail([string]$Message) { Write-Host ""; Write-Host "HATA: $Message" -ForegroundColor Red; exit 1 }
 function Ok([string]$Message)   { Write-Host "[OK] $Message" -ForegroundColor Green }
 function Info([string]$Message) { Write-Host "[INFO] $Message" -ForegroundColor DarkYellow }
 function Warn([string]$Message) { Write-Host "[UYARI] $Message" -ForegroundColor Yellow }
+
+# OpenCode v2 zorunludur (service restart, providers şeması, plugin API).
+# Kurulu değilse kurulum adımı halleder; v1 ise durup yükseltme yönergesi verir.
+function Assert-OpenCodeV2 {
+    if (-not (Get-Command opencode -ErrorAction SilentlyContinue)) { return }
+    $ver = ""
+    try { $ver = (opencode --version 2>$null | Out-String) } catch {}
+    $m = [regex]::Match("$ver", '(\d+)\.\d+\.\d+')
+    $major = if ($m.Success) { [int]$m.Groups[1].Value } else { 0 }
+    if ($major -lt 2) {
+        $found = if ($m.Success) { $m.Value } else { "bilinmiyor" }
+        Fail "Bu kurulum OpenCode v2 gerektirir (tespit edilen: $found). Yükseltmek için 'opencode upgrade' çalıştırın ya da https://opencode.ai adresinden yeniden kurun."
+    }
+}
 
 function Get-MaskedKey([string]$Key) {
     if ($Key.Length -gt 8) { return "evren_llm_…" + $Key.Substring($Key.Length - 4) }
@@ -266,6 +280,7 @@ function Invoke-TermsFlow([string]$Key) {
 }
 
 function Invoke-SetKey {
+    Assert-OpenCodeV2
     Write-Host "=== EVREN anahtar güncelleme (config/plugin korunur) ===" -ForegroundColor Cyan
     $key = Read-ApiKey "Yeni EVREN API anahtarınız (evren_llm_...)"
     Write-KeyFile -Key $key
@@ -275,6 +290,7 @@ function Invoke-SetKey {
 }
 
 function Invoke-Diagnose {
+    Assert-OpenCodeV2
     Write-Host "=== EVREN teşhisi (salt-okunur) ===" -ForegroundColor Cyan
     if (Get-Command opencode -ErrorAction SilentlyContinue) { Ok "opencode kurulu." }
     else { Warn "opencode PATH'te yok." }
@@ -300,6 +316,7 @@ function Invoke-Diagnose {
 }
 
 function Invoke-SyncModels {
+    Assert-OpenCodeV2
     Write-Host "=== EVREN model senkronu ===" -ForegroundColor Cyan
     $key = Read-SavedKey
     if (-not $key -and $env:EVREN_API_KEY) { $key = $env:EVREN_API_KEY }
@@ -316,6 +333,7 @@ function Invoke-SyncModels {
 }
 
 function Invoke-Uninstall {
+    Assert-OpenCodeV2
     Write-Host "=== EVREN kaldırma ===" -ForegroundColor Cyan
     Backup-Config
     if (Test-Path $ConfigPath) {
@@ -362,6 +380,7 @@ function Invoke-Install {
             }
         } catch { Fail "opencode kurulamadı (https://opencode.ai adresinden elle kurun)." }
     }
+    Assert-OpenCodeV2
 
     $key = Read-ApiKey "EVREN API anahtarınız (evren_llm_...)"
 

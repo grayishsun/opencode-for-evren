@@ -1,7 +1,7 @@
 {
   "name": "opencode-evren-dev",
   "private": true,
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Geliştirme kökü (typecheck). Yayınlanan paket: plugin/package.json.",
   "type": "module",
   "license": "MIT",

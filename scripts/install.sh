@@ -21,7 +21,7 @@
 set -euo pipefail
 
 BASE_URL="https://evren-llmapi.ssyz.org.tr/v1"
-INSTALLER_VERSION="0.1.7"
+INSTALLER_VERSION="0.1.8"
 REPO_RAW="https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main"
 CONFIG_DIR="${HOME}/.config/opencode"
 CONFIG_PATH="${CONFIG_DIR}/opencode.jsonc"
@@ -40,6 +40,18 @@ warn() { printf '[UYARI] %s\n' "$1"; }
 
 command -v curl >/dev/null 2>&1 || fail "curl bulunamadı."
 command -v python3 >/dev/null 2>&1 || fail "python3 gerekli (JSON birleştirme için)."
+
+# OpenCode v2 zorunludur (service restart, providers şeması, plugin API).
+# Kurulu değilse kurulum adımı halleder; v1 ise durup yükseltme yönergesi verir.
+require_v2() {
+  command -v opencode >/dev/null 2>&1 || return 0
+  local ver major
+  ver="$(opencode --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
+  major="${ver%%.*}"
+  if [[ -z "$major" || "$major" -lt 2 ]]; then
+    fail "Bu kurulum OpenCode v2 gerektirir (tespit edilen: ${ver:-bilinmiyor}). Yükseltmek için 'opencode upgrade' çalıştırın ya da https://opencode.ai adresinden yeniden kurun."
+  fi
+}
 
 # Script'in yanındaki plugin/ varsa yerelden, yoksa GitHub'dan çekilir.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -340,6 +352,7 @@ terms_flow() {
 }
 
 do_diagnose() {
+  require_v2
   printf '=== EVREN teşhisi (salt-okunur) ===\n'
   command -v opencode >/dev/null 2>&1 && ok "opencode: $(opencode --version 2>/dev/null || echo kurulu)" || warn "opencode PATH'te yok."
   [[ -f "$CONFIG_PATH" ]] && ok "config var: $CONFIG_PATH" || warn "config yok: $CONFIG_PATH"
@@ -378,6 +391,7 @@ PYEOF
 }
 
 do_set_key() {
+  require_v2
   printf '=== EVREN anahtar güncelleme (config/plugin korunur) ===\n'
   local key
   key="$(prompt_key "Yeni EVREN API anahtarınız (evren_llm_...)")"
@@ -389,6 +403,7 @@ do_set_key() {
 }
 
 do_sync_models() {
+  require_v2
   printf '=== EVREN model senkronu ===\n'
   local key
   key="$(read_saved_key 2>/dev/null || printf '%s' "${EVREN_API_KEY:-}")"
@@ -405,6 +420,7 @@ do_sync_models() {
 }
 
 do_uninstall() {
+  require_v2
   printf '=== EVREN kaldırma ===\n'
   backup_config
   if [[ -f "$CONFIG_PATH" ]]; then
@@ -450,6 +466,7 @@ do_install() {
     warn "opencode bulunamadı; kurulmaya çalışılıyor..."
     curl -fsSL https://opencode.ai/install | bash || fail "opencode kurulamadı (https://opencode.ai adresinden elle kurun)."
   fi
+  require_v2
 
   local key
   key="$(prompt_key "EVREN API anahtarınız (evren_llm_...)")"
