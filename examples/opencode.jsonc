@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "providers": {
+    "evren": {
+      "name": "EVREN LLM",
+      "env": ["EVREN_API_KEY", "EVREN_LLM_API_KEY"],
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "https://evren-llmapi.ssyz.org.tr/v1"
+      },
+      "models": {
+        "glm-5.3": {
+          "name": "glm-5.3",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 524288, "output": 16384 }
+        }
+      }
+    }
+  }
+}

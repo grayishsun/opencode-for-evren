@@ -1,0 +1,8 @@
+#指向 node_modules, yedekler ve sırlar asla commit'lenmez
+node_modules/
+*.bak-*
+.evren-key
+.evren-config
+tool-output/
+.DS_Store
+Thumbs.db
