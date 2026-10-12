@@ -1,0 +1,20 @@
+{
+  "name": "opencode-evren",
+  "version": "0.1.5",
+  "description": "EVREN LLM provider entegrasyonu: otomatik model senkronu, kota/sidebar, terms kapısı ve 429 backoff.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./index.ts",
+    "./tui": "./tui.tsx",
+    "./rpc": "./rpc.ts"
+  },
+  "dependencies": {
+    "@opencode/plugin": "2.0.27"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.5.8",
+    "@opentui/solid": ">=0.5.8",
+    "solid-js": ">=1.9.0"
+  }
+}

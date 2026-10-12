@@ -1,5 +1,12 @@
 # changelog
 
+## v0.1.5 — 2026-10-12
+
+- Kritik düzeltme (devam): plugin kurulum düzeni DÜZ (`index.ts` kökte).
+  opencode dosya-keşfi `src/` alt dizinini görmüyordu; eski `evren-gateway`
+  (araçsız) yüklenip `evren_status`/`/evren`/sidebar gölgede kalıyordu.
+  Kaynaklar `src/` → `plugin/` taşındı; kurulum `src/` artığını siler.
+
 ## v0.1.4 — 2026-10-12
 
 - Kritik düzeltme: kurulum artık plugin dizinindeki eski düz kök dosyaları

@@ -20,7 +20,7 @@
 set -euo pipefail
 
 BASE_URL="https://evren-llmapi.ssyz.org.tr/v1"
-INSTALLER_VERSION="0.1.4"
+INSTALLER_VERSION="0.1.5"
 REPO_RAW="https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main"
 CONFIG_DIR="${HOME}/.config/opencode"
 CONFIG_PATH="${CONFIG_DIR}/opencode.jsonc"
@@ -28,7 +28,9 @@ KEY_FILE="${CONFIG_DIR}/.evren-config"
 LEGACY_KEY_FILE="${CONFIG_DIR}/.evren-key"
 LEGACY_HOME_KEY="${HOME}/.evren-config"
 PLUGIN_DIR="${CONFIG_DIR}/plugins/evren"
-PLUGIN_FILES=("package.json" "src/index.ts" "src/rpc.ts" "src/tui.tsx")
+# Kurulum düzeni DÜZDÜR (package.json + index.ts + rpc.ts + tui.tsx kökte):
+# opencode dosya-keşfi yalnızca kök index.ts'i yükler, src/ alt dizinini görmez.
+PLUGIN_FILES=("plugin/package.json" "plugin/index.ts" "plugin/rpc.ts" "plugin/tui.tsx")
 
 fail() { printf '\nHATA: %s\n' "$1" >&2; exit 1; }
 ok()   { printf '[OK] %s\n' "$1"; }
@@ -38,11 +40,11 @@ warn() { printf '[UYARI] %s\n' "$1"; }
 command -v curl >/dev/null 2>&1 || fail "curl bulunamadı."
 command -v python3 >/dev/null 2>&1 || fail "python3 gerekli (JSON birleştirme için)."
 
-# Script'in yanındaki src/ varsa yerelden, yoksa GitHub'dan çekilir.
+# Script'in yanındaki plugin/ varsa yerelden, yoksa GitHub'dan çekilir.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "${SCRIPT_DIR}/src/index.ts" ]]; then
+if [[ -f "${SCRIPT_DIR}/../plugin/index.ts" || -f "${SCRIPT_DIR}/plugin/index.ts" ]]; then
   SRC_MODE="local"
-  SRC_DIR="${SCRIPT_DIR}"
+  if [[ -f "${SCRIPT_DIR}/plugin/index.ts" ]]; then SRC_DIR="${SCRIPT_DIR}/plugin"; else SRC_DIR="${SCRIPT_DIR}/../plugin"; fi
 else
   SRC_MODE="remote"
 fi
@@ -240,19 +242,18 @@ PYEOF
 install_plugin() {
   mkdir -p "$PLUGIN_DIR"
   if [[ "$SRC_MODE" == "local" ]]; then
-    cp "${SRC_DIR}/package.json" "${PLUGIN_DIR}/package.json"
-    mkdir -p "${PLUGIN_DIR}/src"
-    cp "${SRC_DIR}/src/index.ts" "${SRC_DIR}/src/rpc.ts" "${SRC_DIR}/src/tui.tsx" "${PLUGIN_DIR}/src/"
+    cp "${SRC_DIR}/package.json" "${SRC_DIR}/index.ts" "${SRC_DIR}/rpc.ts" "${SRC_DIR}/tui.tsx" "$PLUGIN_DIR/"
   else
-    local f
+    local f base
     for f in "${PLUGIN_FILES[@]}"; do
-      mkdir -p "${PLUGIN_DIR}/$(dirname "$f")"
-      curl -fsS --max-time 60 --retry 3 "${REPO_RAW}/${f}" -o "${PLUGIN_DIR}/${f}" \
+      base="$(basename "$f")"
+      curl -fsS --max-time 60 --retry 3 "${REPO_RAW}/${f}" -o "${PLUGIN_DIR}/${base}" \
         || fail "Plugin dosyası indirilemedi: $f"
     done
   fi
-  # Eski düzende kalan kök dosyalar (index.ts/rpc.ts) yeni paketi gölgelerdi; temizlenir.
-  rm -f "${PLUGIN_DIR}/index.ts" "${PLUGIN_DIR}/index.js" "${PLUGIN_DIR}/rpc.ts" "${PLUGIN_DIR}/tui.ts" "${PLUGIN_DIR}/tui.tsx"
+  # Eski düzen artıkları (src/ alt dizini) yeni paketi gölgelerdi; temizlenir.
+  rm -rf "${PLUGIN_DIR}/src"
+  rm -f "${PLUGIN_DIR}/index.js" "${PLUGIN_DIR}/tui.ts"
   ok "Plugin kuruldu: $PLUGIN_DIR"
 }
 

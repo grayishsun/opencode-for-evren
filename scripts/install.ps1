@@ -28,8 +28,8 @@ $KeyFile    = Join-Path $ConfigDir ".evren-config"
 $LegacyKey  = Join-Path $ConfigDir ".evren-key"
 $LegacyHome = Join-Path ([Environment]::GetFolderPath("UserProfile")) ".evren-config"
 $PluginDir  = Join-Path $ConfigDir "plugins\evren"
-$PluginFiles = @("package.json", "src/index.ts", "src/rpc.ts", "src/tui.tsx")
-$InstallerVersion = "0.1.4"
+$PluginFiles = @("plugin/package.json", "plugin/index.ts", "plugin/rpc.ts", "plugin/tui.tsx")
+$InstallerVersion = "0.1.5"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Fail([string]$Message) { Write-Host ""; Write-Host "HATA: $Message" -ForegroundColor Red; exit 1 }
@@ -193,22 +193,24 @@ function Merge-EvrenConfig($ModelsMap) {
 }
 
 function Install-Plugin {
-    New-Item -ItemType Directory -Force -Path (Join-Path $PluginDir "src") | Out-Null
-    $local = Join-Path $ScriptRoot "src"
+    New-Item -ItemType Directory -Force -Path $PluginDir | Out-Null
+    # Kurulum düzeni DÜZDÜR (kökte index.ts): opencode dosya-keşfi src/ alt dizinini görmez.
+    $local = Join-Path $ScriptRoot "plugin"
+    if (-not (Test-Path (Join-Path $local "index.ts"))) { $local = Join-Path $ScriptRoot "..\plugin" }
     if (Test-Path (Join-Path $local "index.ts")) {
-        Copy-Item (Join-Path $ScriptRoot "package.json") (Join-Path $PluginDir "package.json") -Force
-        Copy-Item (Join-Path $local "index.ts") (Join-Path $PluginDir "src\index.ts") -Force
-        Copy-Item (Join-Path $local "rpc.ts") (Join-Path $PluginDir "src\rpc.ts") -Force
-        Copy-Item (Join-Path $local "tui.tsx") (Join-Path $PluginDir "src\tui.tsx") -Force
+        Copy-Item (Join-Path $local "package.json") (Join-Path $PluginDir "package.json") -Force
+        Copy-Item (Join-Path $local "index.ts") (Join-Path $PluginDir "index.ts") -Force
+        Copy-Item (Join-Path $local "rpc.ts") (Join-Path $PluginDir "rpc.ts") -Force
+        Copy-Item (Join-Path $local "tui.tsx") (Join-Path $PluginDir "tui.tsx") -Force
     } else {
-        foreach ($f in @("package.json", "src/index.ts", "src/rpc.ts", "src/tui.tsx")) {
-            $dest = Join-Path $PluginDir $f
-            New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
+        foreach ($f in @("plugin/package.json", "plugin/index.ts", "plugin/rpc.ts", "plugin/tui.tsx")) {
+            $dest = Join-Path $PluginDir (Split-Path $f -Leaf)
             Invoke-WebRequest -Uri "$RepoRaw/$f" -OutFile $dest
         }
     }
-    # Eski düzende kalan kök dosyalar (index.ts/rpc.ts) yeni paketi gölgelerdi; temizlenir.
-    foreach ($stale in @("index.ts", "index.js", "rpc.ts", "tui.ts", "tui.tsx")) {
+    # Eski düzen artığı (src/ alt dizini) keşfi şaşırtır; temizlenir.
+    if (Test-Path (Join-Path $PluginDir "src")) { Remove-Item (Join-Path $PluginDir "src") -Recurse -Force }
+    foreach ($stale in @("index.js", "tui.ts")) {
         $p = Join-Path $PluginDir $stale
         if (Test-Path $p) { Remove-Item $p -Force }
     }

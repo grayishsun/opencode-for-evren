@@ -69,9 +69,9 @@ opencode run --model evren/glm-5.3 "Sadece EVREN OK yaz."
 | `scripts/install.sh` | Linux/macOS kurulum, `--sync-models`, `--uninstall`, `--diagnose` |
 | `scripts/install.ps1` | Windows kurulum (aynı bayraklar: `-SyncModels`, `-Uninstall`, `-Diagnose`) |
 | `scripts/install.cmd` | CMD'den `install.ps1`'e ince yönlendirici |
-| `src/index.ts` | Server plugin: provider kaydı, 10 dk'da bir model senkronu, 60 sn'de bir `/v1/quota` yoklaması, `X-Evren-*` yanıt başlığı yakalama, 429 retry backoff, `/evren` komutu, `evren_status` aracı |
-| `src/tui.tsx` | TUI plugin: **sidebar footer'da kalan CR** + seviye, kota kötüleşince uyarı toast'ı |
-| `src/rpc.ts` | Server↔TUI paylaşımlı RPC sözleşmesi (`status` + `updated` olayı) |
+| `plugin/index.ts` | Server plugin: provider kaydı, 10 dk'da bir model senkronu, 60 sn'de bir `/v1/quota` yoklaması, `X-Evren-*` yanıt başlığı yakalama, 429 retry backoff, `/evren` komutu, `evren_status` aracı |
+| `plugin/tui.tsx` | TUI plugin: **sidebar footer'da kalan CR** + seviye, kota kötüleşince uyarı toast'ı |
+| `plugin/rpc.ts` | Server↔TUI paylaşımlı RPC sözleşmesi (`status` + `updated` olayı) |
 | `examples/opencode.jsonc` | Elle kurulum için en küçük v2 provider örneği |
 
 Oturum içindeyken `/evren` yazmak kota + şart + model özetini gösterir.
