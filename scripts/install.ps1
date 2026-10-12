@@ -29,7 +29,7 @@ $LegacyKey  = Join-Path $ConfigDir ".evren-key"
 $LegacyHome = Join-Path ([Environment]::GetFolderPath("UserProfile")) ".evren-config"
 $PluginDir  = Join-Path $ConfigDir "plugins\evren"
 $PluginFiles = @("package.json", "src/index.ts", "src/rpc.ts", "src/tui.tsx")
-$InstallerVersion = "0.1.2"
+$InstallerVersion = "0.1.3"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Fail([string]$Message) { Write-Host ""; Write-Host "HATA: $Message" -ForegroundColor Red; exit 1 }
@@ -81,7 +81,8 @@ function Read-SavedKey {
 function Write-KeyFile([string]$Key) {
     New-Item -ItemType Directory -Force -Path $ConfigDir | Out-Null
     $payload = @{ apiKey = $Key; updatedAt = [DateTime]::UtcNow.ToString("o") } | ConvertTo-Json
-    Set-Content -Path $KeyFile -Value $payload -Encoding UTF8NoBOM -NoNewline
+    # Not: Set-Content -Encoding UTF8NoBOM yalnız PS7+; 5.1 uyumluluğu için .NET yazımı (BOM'suz).
+    [System.IO.File]::WriteAllText($KeyFile, $payload, (New-Object System.Text.UTF8Encoding $false))
     try {
         & icacls $KeyFile /inheritance:r /grant:r "$($env:USERNAME):(R,W)" | Out-Null
     } catch { Warn "Dosya ACL sıkılaştırılamadı; dosya yine de yazıldı: $KeyFile" }

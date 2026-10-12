@@ -20,7 +20,7 @@
 set -euo pipefail
 
 BASE_URL="https://evren-llmapi.ssyz.org.tr/v1"
-INSTALLER_VERSION="0.1.2"
+INSTALLER_VERSION="0.1.3"
 REPO_RAW="https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main"
 CONFIG_DIR="${HOME}/.config/opencode"
 CONFIG_PATH="${CONFIG_DIR}/opencode.jsonc"

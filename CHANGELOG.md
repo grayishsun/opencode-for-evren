@@ -1,5 +1,11 @@
 # changelog
 
+## v0.1.3 — 2026-10-12
+
+- Windows PowerShell 5.1 uyumluluğu: anahtar dosyası yazımında PS7'ye özel
+  `Set-Content -Encoding UTF8NoBOM` yerine .NET `WriteAllText` (BOM'suz)
+  kullanılır. (`Cannot bind parameter 'Encoding'` hatası giderildi.)
+
 ## v0.1.2 — 2026-10-12
 
 - Kurulum scriptleri açılışta sürüm basar (`opencode-for-evren vX.Y.Z`);
