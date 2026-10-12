@@ -208,6 +208,7 @@ yanıt başlıklarından beslenir. Hata gövdesindeki `error.evren` ayrıntılar
 | `FileSystem.readFile ... .evren-key (ENOENT)` | Eski kurulum artığı: yeni kurulum `.evren-config`'e taşır; `--diagnose` ile doğrulayın. |
 | Config içinde `apiKey` alanı görünüyor | Bu kuruluma aykırı: `--uninstall` + yeniden kurun (değer config'e yazılmaz). |
 | Sidebar'da bakiye görünmüyor | Kurulum servisi otomatik restart eder; yine de görünmezse elle `opencode service restart` çalıştırın. `opencode plugin list` içinde evren geçmeli. |
+| `service status` / `restart` çıktısı garip | Normal davranışlar: `opencode service status` yalnızca sunucu adresini basar (`http://127.0.0.1:PORT`, restart bilgisi vermez); `opencode service restart` sessizdir, çıktı vermez ve mevcut oturumu düşürür (bu beklenen etkidir). `DESCRIPTION/USAGE/SUBCOMMANDS` metni görüyorsanız alt komutu yanlış yazmışsınızdır (`service` tek başına veya hatalı isim bu yardımı basar). |
 | `opencode` yok | Kurulum dener (unix: `opencode.ai/install`, Windows: winget); olmazsa [opencode.ai](https://opencode.ai) adresinden elle kurun. |
 | Eski sürüm banner'ı (`v0.1.2` gibi) | `%TEMP%\evren-install.ps1` silinmeden yeniden indirilmiş ya da CDN eski kopya sunmuş: yukarıdaki güncel tek-satırı (önce `del`, `?v=` önbellek-kırıcı içerir) kullanın. |
 
