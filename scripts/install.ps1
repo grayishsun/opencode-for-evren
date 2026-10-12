@@ -31,7 +31,7 @@ $LegacyKey  = Join-Path $ConfigDir ".evren-key"
 $LegacyHome = Join-Path ([Environment]::GetFolderPath("UserProfile")) ".evren-config"
 $PluginDir  = Join-Path $ConfigDir "plugins\evren"
 $PluginFiles = @("plugin/package.json", "plugin/index.ts", "plugin/rpc.ts", "plugin/tui.tsx")
-$InstallerVersion = "0.1.6"
+$InstallerVersion = "0.1.7"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Fail([string]$Message) { Write-Host ""; Write-Host "HATA: $Message" -ForegroundColor Red; exit 1 }
@@ -385,11 +385,15 @@ function Invoke-Install {
 
     $dbg = opencode debug config 2>$null | Out-String
     if ($dbg -match '"evren"') { Ok "Doğrulandı: opencode config içinde evren provider'ını görüyor." }
-    else { Warn "evren config içinde görünmüyor; servisin yeniden başlaması gerekebilir." }
+    else { Warn "evren config içinde görünmüyor." }
     try { Info "quota: $(Invoke-EvrenApi -Path '/quota' -Key $key | ConvertTo-Json -Compress)" } catch {}
+    Info "opencode servisi yeniden başlatılıyor (plugin ve sidebar için)..."
+    try { opencode service restart | Out-Null; Ok "opencode servisi yeniden başlatıldı." }
+    catch { Warn "Otomatik restart başarısız oldu." }
     Write-Host ""
-    Write-Host "Kurulum bitti. Sidebar bakiye için TUI/IDE servisini yeniden başlatın." -ForegroundColor DarkGray
+    Write-Host "Kurulum bitti." -ForegroundColor DarkGray
     Write-Host 'Test: opencode run --model evren/glm-5.3 "Sadece EVREN OK yaz."'
+    Write-Host "Servisi daha sonra elle yeniden başlatmak isterseniz: opencode service restart" -ForegroundColor DarkGray
 }
 
 if ($Diagnose) { Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray; Invoke-Diagnose; exit 0 }

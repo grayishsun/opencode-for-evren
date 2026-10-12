@@ -1,5 +1,11 @@
 # changelog
 
+## v0.1.7 — 2026-10-12
+
+- Kurulum sonunda `opencode service restart` otomatik çalışır (plugin ve
+  sidebar hemen devreye girer); ekrana yazılır, başarısızsa elle komut
+  gösterilir. README'de elle restart komutu belgelendi.
+
 ## v0.1.6 — 2026-10-12
 
 - Yeni: `--set-key` / `-SetKey` — anahtarı config/plugin'a dokunmadan

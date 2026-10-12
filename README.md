@@ -54,8 +54,11 @@ Kurulum sırasıyla şunları yapar:
    yazar. **Config'e anahtar yazılmaz** — ne değer olarak ne `{env:}` referansı olarak.
 5. Plugin dosyalarını `~/.config/opencode/plugins/evren/` altına kurar.
 6. `opencode debug config` ile provider'ın göründüğünü doğrular, güncel kotayı özetler.
+7. `opencode service restart` ile servisi otomatik yeniden başlatır (plugin ve
+   sidebar hemen devreye girer); ekranda da yazar. Sonradan gerekirse elle:
+   `opencode service restart`.
 
-Kurulumdan sonra TUI/IDE servisini yeniden başlatın (sidebar bakiyesi için):
+Kurulumdan sonra TUI/IDE servisi otomatik yeniden başlatılır. Elle yapmak için:
 
 ```bash
 opencode service restart
@@ -204,7 +207,7 @@ yanıt başlıklarından beslenir. Hata gövdesindeki `error.evren` ayrıntılar
 | `terms ... accepted=true doğrulanamadı` | Kurulumu yeniden çalıştırın, şartları `EVET` ile onaylayın. |
 | `FileSystem.readFile ... .evren-key (ENOENT)` | Eski kurulum artığı: yeni kurulum `.evren-config`'e taşır; `--diagnose` ile doğrulayın. |
 | Config içinde `apiKey` alanı görünüyor | Bu kuruluma aykırı: `--uninstall` + yeniden kurun (değer config'e yazılmaz). |
-| Sidebar'da bakiye görünmüyor | `opencode service restart`; `opencode plugin list` içinde evren geçmeli. |
+| Sidebar'da bakiye görünmüyor | Kurulum servisi otomatik restart eder; yine de görünmezse elle `opencode service restart` çalıştırın. `opencode plugin list` içinde evren geçmeli. |
 | `opencode` yok | Kurulum dener (unix: `opencode.ai/install`, Windows: winget); olmazsa [opencode.ai](https://opencode.ai) adresinden elle kurun. |
 | Eski sürüm banner'ı (`v0.1.2` gibi) | `%TEMP%\evren-install.ps1` silinmeden yeniden indirilmiş ya da CDN eski kopya sunmuş: yukarıdaki güncel tek-satırı (önce `del`, `?v=` önbellek-kırıcı içerir) kullanın. |
 

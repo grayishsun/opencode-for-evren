@@ -21,7 +21,7 @@
 set -euo pipefail
 
 BASE_URL="https://evren-llmapi.ssyz.org.tr/v1"
-INSTALLER_VERSION="0.1.6"
+INSTALLER_VERSION="0.1.7"
 REPO_RAW="https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main"
 CONFIG_DIR="${HOME}/.config/opencode"
 CONFIG_PATH="${CONFIG_DIR}/opencode.jsonc"
@@ -479,12 +479,19 @@ do_install() {
     if opencode debug config 2>/dev/null | grep -q '"evren"'; then
       ok "Doğrulandı: opencode config içinde evren provider'ını görüyor."
     else
-      warn "opencode config içinde evren görünmüyor; servisin yeniden başlaması gerekebilir."
+      warn "opencode config içinde evren görünmüyor."
     fi
     printf '\nKota: %s\n' "$(api_get "/quota" "$key")"
+    info "opencode servisi yeniden başlatılıyor (plugin ve sidebar için)..."
+    if opencode service restart >/dev/null 2>&1; then
+      ok "opencode servisi yeniden başlatıldı."
+    else
+      warn "Otomatik restart başarısız oldu."
+    fi
   fi
-  printf '\nKurulum bitti. Sidebar bakiye için TUI/IDE servisini yeniden başlatın.\n'
+  printf '\nKurulum bitti.\n'
   printf 'Test: opencode run --model evren/glm-5.3 "Sadece EVREN OK yaz."\n'
+  printf 'Servisi daha sonra elle yeniden başlatmak isterseniz: opencode service restart\n'
 }
 
 case "${1:-}" in
