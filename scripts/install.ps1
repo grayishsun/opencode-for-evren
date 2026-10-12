@@ -29,6 +29,7 @@ $LegacyKey  = Join-Path $ConfigDir ".evren-key"
 $LegacyHome = Join-Path ([Environment]::GetFolderPath("UserProfile")) ".evren-config"
 $PluginDir  = Join-Path $ConfigDir "plugins\evren"
 $PluginFiles = @("package.json", "src/index.ts", "src/rpc.ts", "src/tui.tsx")
+$InstallerVersion = "0.1.2"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Fail([string]$Message) { Write-Host ""; Write-Host "HATA: $Message" -ForegroundColor Red; exit 1 }
@@ -71,7 +72,7 @@ function Read-SavedKey {
                 $k = "$($data.apiKey)$($data.key)".Trim()
                 if ($k) { return $k }
             }
-            elseif ($raw -match '^evren_llm_[A-Za-z0-9_-]+$') { return $raw }
+            elseif ($raw -match '^evren_llm_\S{8,}$') { return $raw }
         } catch {}
     }
     return $null
@@ -355,7 +356,8 @@ function Invoke-Install {
     Write-Host 'Test: opencode run --model evren/glm-5.3 "Sadece EVREN OK yaz."'
 }
 
-if ($Diagnose) { Invoke-Diagnose; exit 0 }
-if ($SyncModels) { Invoke-SyncModels; exit 0 }
-if ($Uninstall) { Invoke-Uninstall; exit 0 }
+if ($Diagnose) { Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray; Invoke-Diagnose; exit 0 }
+if ($SyncModels) { Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray; Invoke-SyncModels; exit 0 }
+if ($Uninstall) { Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray; Invoke-Uninstall; exit 0 }
+Write-Host "opencode-for-evren v$InstallerVersion" -ForegroundColor DarkGray
 Invoke-Install

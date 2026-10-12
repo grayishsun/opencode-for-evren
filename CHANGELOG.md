@@ -1,5 +1,11 @@
 # changelog
 
+## v0.1.2 — 2026-10-12
+
+- Kurulum scriptleri açılışta sürüm basar (`opencode-for-evren vX.Y.Z`);
+  eski kopyayla çalıştırma karışıklığı önlenir.
+- `Read-SavedKey` (ps1) legacy ham anahtar denetimi de gevşek biçime alındı.
+
 ## v0.1.1 — 2026-10-12
 
 - Anahtar biçim kapısı esnetildi: `evren_llm_` öneki + en az 8 boşluksuz

@@ -20,6 +20,7 @@
 set -euo pipefail
 
 BASE_URL="https://evren-llmapi.ssyz.org.tr/v1"
+INSTALLER_VERSION="0.1.2"
 REPO_RAW="https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main"
 CONFIG_DIR="${HOME}/.config/opencode"
 CONFIG_PATH="${CONFIG_DIR}/opencode.jsonc"
@@ -434,9 +435,9 @@ do_install() {
 }
 
 case "${1:-}" in
-  --sync-models|--update-models) do_sync_models ;;
-  --uninstall) do_uninstall ;;
-  --diagnose) do_diagnose ;;
-  "") do_install ;;
+  --sync-models|--update-models) info "opencode-for-evren v${INSTALLER_VERSION}"; do_sync_models ;;
+  --uninstall) info "opencode-for-evren v${INSTALLER_VERSION}"; do_uninstall ;;
+  --diagnose) info "opencode-for-evren v${INSTALLER_VERSION}"; do_diagnose ;;
+  "") info "opencode-for-evren v${INSTALLER_VERSION}"; do_install ;;
   *) fail "Bilinmeyen parametre: $1 (--sync-models | --uninstall | --diagnose)" ;;
 esac
