@@ -1,5 +1,15 @@
 # changelog
 
+## v0.1.1 — 2026-10-12
+
+- Anahtar biçim kapısı esnetildi: `evren_llm_` öneki + en az 8 boşluksuz
+  karakter yeterli; gerçek doğrulama canlı API çağrısıdır (401). Önceki katı
+  regex (`[A-Za-z0-9_-]`), içinde `+/=.` gibi karakterler bulunan ya da
+  tırnak/görünmez karakterle yapıştırılan geçerli anahtarları reddediyordu.
+- Yapıştırma temizliği: baştaki/sondaki tırnaklar, sıfır-genişlikli
+  karakterler (U+200B–U+200D) ve BOM ayıklanır; hata mesajı anahtar
+  uzunluğunu gösterir (değer yazdırılmaz).
+
 ## v0.1.0 — 2026-10-12
 
 İlk sürüm. `bykemalh/evren-llm-opencode` temel alınarak opencode **v2** için

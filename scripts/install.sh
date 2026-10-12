@@ -396,8 +396,9 @@ do_install() {
     IFS= read -r -s -p "EVREN API anahtarınız (evren_llm_...): " key
   fi
   printf '\n'
-  key="$(printf '%s' "$key" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-  [[ "$key" =~ ^evren_llm_[A-Za-z0-9_-]+$ ]] || fail "Anahtar evren_llm_... biçiminde değil."
+  key="$(printf '%s' "$key" | python3 -c 'import sys; k = sys.stdin.read().strip(); k = k.strip(chr(34) + chr(39)); k = k.replace(chr(0x200b), "").replace(chr(0x200c), "").replace(chr(0x200d), "").replace(chr(0xfeff), ""); print(k)')"
+  # Biçim kapısı bilerek gevşek: gerçek doğrulama canlı API çağrısıdır (401).
+  [[ "$key" =~ ^evren_llm_[^[:space:]]{8,}$ ]] || fail "Anahtar biçimi tanınmadı (uzunluk ${#key}). Tırnaksız, 'evren_llm_' ile başlayan anahtarı panelden yeniden kopyalayın."
   export EVREN_API_KEY="$key"
 
   write_key_file "$key"

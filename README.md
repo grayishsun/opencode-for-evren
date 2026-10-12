@@ -123,6 +123,7 @@ yanıt başlıklarından beslenir. Hata gövdesindeki `error.evren` ayrıntılar
 
 | Sorun | Çözüm |
 | --- | --- |
+| `Anahtar biçimi tanınmadı` | Anahtarı tırnaksız yapıştırın (baştaki/sondaki `"` temizlenir ama `Bearer ` öneki gibi fazlalıklar olmaz); görünmez karakterler otomatik ayıklanır. Biçim geçerse gerçek kontrol API'dedir: `401` alırsanız anahtar yanlıştır/iptaldir. |
 | `429` / `5 saniye sonra tekrar deneyin` | Normal: gateway soğuma uygular. Plugin otomatik bekleyip dener; paralel oturum açmayın. |
 | `terms ... accepted=true doğrulanamadı` | Kurulumu yeniden çalıştırın, şartları `EVET` ile onaylayın. |
 | `FileSystem.readFile ... .evren-key (ENOENT)` | Eski kurulum artığı: yeni kurulum `.evren-config`'e taşır; `--diagnose` ile doğrulayın. |

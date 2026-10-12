@@ -319,9 +319,14 @@ function Invoke-Install {
 
     $secure = Read-Host "EVREN API anahtarınız (evren_llm_...)" -AsSecureString
     $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-    try { $key = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr).Trim() }
+    try { $key = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
-    if ($key -notmatch '^evren_llm_[A-Za-z0-9_-]+$') { Fail "Anahtar evren_llm_... biçiminde değil." }
+    # Yapıştırma artıkları: kırp, tırnakları ve görünmez karakterleri at.
+    $key = $key.Trim().Trim('"').Trim("'").Trim() -replace "[\u200B-\u200D\uFEFF]", ""
+    # Biçim kapısı bilerek gevşek: gerçek doğrulama canlı API çağrısıdır (401).
+    if ($key -notmatch '^evren_llm_\S{8,}$') {
+        Fail "Anahtar biçimi tanınmadı (uzunluk $($key.Length)). Tırnaksız, 'evren_llm_' ile başlayan anahtarı panelden yeniden kopyalayın."
+    }
 
     Write-KeyFile -Key $key
     Invoke-TermsFlow -Key $key
