@@ -16,20 +16,26 @@ Anahtarınızı [evren.ssyz.org.tr/api-keys](https://evren.ssyz.org.tr/api-keys)
 **Linux / macOS:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main/scripts/install.sh | bash
+curl -fsSL --remove-on-error "https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main/scripts/install.sh?v=$RANDOM" | bash
 ```
+
+> Not: `?v=$RANDOM` önbellek-kırıcıdır; CDN'in eski kopya sunmasını engeller.
 
 **Windows PowerShell** (normal kullanıcı, yönetici değil):
 
 ```powershell
-irm "https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main/scripts/install.ps1" | iex
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main/scripts/install.ps1?v=$([Guid]::NewGuid())" -OutFile "$env:TEMP\evren-install.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\evren-install.ps1"
 ```
 
 **Windows CMD:**
 
 ```cmd
-curl -fsSL "https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main/scripts/install.ps1" -o "%TEMP%\evren-install.ps1" && powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\evren-install.ps1"
+del "%TEMP%\evren-install.ps1" 2>nul & curl -fsSL --remove-on-error "https://raw.githubusercontent.com/grayishsun/opencode-for-evren/main/scripts/install.ps1?v=%RANDOM%" -o "%TEMP%\evren-install.ps1" && powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\evren-install.ps1"
 ```
+
+> Eski kopya çalışırsa: komut önce `del` ile siler, `?v=%RANDOM%` ile tazesini
+> indirir. Açılışta `opencode-for-evren vX.Y.Z` bandını kontrol edin.
 
 Kurulum sırasıyla şunları yapar:
 
@@ -130,6 +136,7 @@ yanıt başlıklarından beslenir. Hata gövdesindeki `error.evren` ayrıntılar
 | Config içinde `apiKey` alanı görünüyor | Bu kuruluma aykırı: `--uninstall` + yeniden kurun (değer config'e yazılmaz). |
 | Sidebar'da bakiye görünmüyor | `opencode service restart`; `opencode plugin list` içinde evren geçmeli. |
 | `opencode` yok | Kurulum dener (unix: `opencode.ai/install`, Windows: winget); olmazsa [opencode.ai](https://opencode.ai) adresinden elle kurun. |
+| Eski sürüm banner'ı (`v0.1.2` gibi) | `%TEMP%\evren-install.ps1` silinmeden yeniden indirilmiş ya da CDN eski kopya sunmuş: yukarıdaki güncel tek-satırı (önce `del`, `?v=` önbellek-kırıcı içerir) kullanın. |
 
 ## Geliştirme
 
